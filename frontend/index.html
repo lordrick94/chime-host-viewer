@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>FRB Viewer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="sidebar">
+    <header>
+      <strong>FRB Viewer</strong>
+      <span id="status"></span>
+    </header>
+    <div id="controls">
+      <label>
+        Filter by FRB ID (substring):
+        <input type="text" id="filter-frb" placeholder="e.g., 20250405 or B">
+      </label>
+      <label>
+        Minimum top1 P_Ox:
+        <input type="number" id="filter-min-score" step="0.01" placeholder="e.g., 0.9">
+      </label>
+      <label>
+        Minimum (top1 + top2) P_Ox:
+        <input type="number" id="filter-min-sum" step="0.01" placeholder="e.g., 0.9">
+      </label>
+      <label>
+        Year:
+        <input type="text" id="filter-year" placeholder="2025 (optional)">
+      </label>
+    </div>
+    <div id="frb-table-container">
+      <table id="frb-table">
+        <thead>
+          <tr>
+            <th>FRB</th>
+            <th>Year</th>
+            <th>Date</th>
+            <th>Top1 P_Ox</th>
+            <th># Images</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- rows added by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="selected-info">
+      Click an FRB in the table to see its images.
+    </div>
+    <div id="grid-controls">
+      <span>View images as:</span>
+      <button type="button" id="btn-single-view">Selected FRB</button>
+      <button type="button" id="btn-grid-main">Grid: main PATH PNGs (filtered FRBs)</button>
+      <button type="button" id="btn-grid-zoomin">Grid: zoom-in PATH PNGs (filtered FRBs)</button>
+    </div>
+    <div id="images-container">
+      <!-- image cards inserted here -->
+    </div>
+  </div>
+
+  <script src="viewer.js"></script>
+</body>
+</html>
