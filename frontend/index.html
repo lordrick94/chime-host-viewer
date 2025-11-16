@@ -52,10 +52,29 @@
       Click an FRB in the table to see its images.
     </div>
     <div id="grid-controls">
-      <span>View images as:</span>
       <button type="button" id="btn-single-view">Selected FRB</button>
-      <button type="button" id="btn-grid-main">Grid: main PATH PNGs (filtered FRBs)</button>
-      <button type="button" id="btn-grid-zoomin">Grid: zoom-in PATH PNGs (filtered FRBs)</button>
+
+      <div class="dropdown">
+        <button type="button" class="dropbtn">CHIME-PATH results ▾</button>
+        <div class="dropdown-content" id="dropdown-path">
+          <a href="#" data-mode="path-all">All PATH images</a>
+          <a href="#" data-mode="path-main">Main PATH images</a>
+          <a href="#" data-mode="path-local-stars">Local with stars</a>
+          <a href="#" data-mode="path-local-nostars">Local without stars</a>
+          <a href="#" data-mode="path-zoomin">Zoom-in</a>
+          <a href="#" data-mode="all-images">All images (all repos)</a>
+        </div>
+      </div>
+
+      <div class="dropdown">
+        <button type="button" class="dropbtn">CHIME-HOST analysis ▾</button>
+        <div class="dropdown-content" id="dropdown-host">
+          <a href="#" data-mode="host-all">All host images</a>
+          <a href="#" data-mode="host-ppxf">PPXF images</a>
+          <a href="#" data-mode="host-sed">SED images</a>
+          <a href="#" data-mode="host-spectra">Spectra images</a>
+        </div>
+      </div>
     </div>
     <div id="images-container">
       <!-- image cards inserted here -->

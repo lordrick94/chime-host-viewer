@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 REPO_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(REPO_ROOT / ".env")
 
+CHIME_HOST_ROOT = os.getenv("CHIME_HOST_ROOT")
+CHIME_HOST_ROOT = Path(CHIME_HOST_ROOT).resolve() if CHIME_HOST_ROOT else None
+
 CHIME_PATH_ROOT = os.getenv("CHIME_PATH_ROOT")
 if CHIME_PATH_ROOT is None:
     raise SystemExit("CHIME_PATH_ROOT is not set in .env")
@@ -38,43 +41,133 @@ def _to_float(v):
     except ValueError:
         return None
 
-
-def classify_kind(filename: str) -> str:
+def classify_kind(filename: str, repo: str) -> str:
     """
-    Assign a simple 'kind' label based on the filename.
-    This helps the JS decide what to show in main/zoomin grids.
+    Assign a 'kind' label based on filename and repo.
+
+    For chime-path:
+      - path-main
+      - path-local-stars
+      - path-local-nostars
+      - path-zoomin
+      - other
+
+    For chime-host-analysis:
+      - host-ppxf      (e.g. *_ppxf_fit.png)
+      - host-spectra   (e.g. *_spectra.png)
+      - host-cutout    (e.g. *_arcsec_cutout.png)
+      - host-sed       (e.g. *_sed.png — future SED images)
+      - other-host
     """
     name = filename.lower()
-    if name.endswith("_path.png"):
-        return "path-main"
-    if "local_stars" in name or "local_nostars" in name:
-        return "path-local"
-    if "zoomin" in name or "zoom" in name:
-        return "path-zoomin"
-    # TODO: extend for spectra / ppxf / sed from other repos
+
+    # ---- chime-path ----
+    if repo == "chime-path":
+        if name.endswith("_path.png"):
+            return "path-main"
+        if "local_stars" in name:
+            return "path-local-stars"
+        if "local_nostars" in name:
+            return "path-local-nostars"
+        if "zoomin" in name or "zoom" in name:
+            return "path-zoomin"
+        return "other"
+
+    # ---- chime-host-analysis ----
+    if repo == "chime-host-analysis":
+        # pPXF fits
+        if "ppxf_fit" in name:
+            return "host-ppxf"
+
+        # spectra
+        if "spectra" in name:
+            return "host-spectra"
+
+        # cutout images (20.0arcsec_cutout, 40.0arcsec_cutout, etc.)
+        if "cutout" in name:
+            return "host-cutout"
+
+        # SED images (when you start naming like *_sed.png)
+        if "sed" in name:
+            return "host-sed"
+
+        return "other-host"
+
     return "other"
 
 
-def find_images_for_frb(frb_dir: Path):
+def find_images_for_frb(frb_dir: Path, repo: str):
     """
-    Return list of image dicts for this FRB in chime-path.
+    Return list of image dicts for this FRB in the given repo.
     Each dict has: repo, rel_path, kind, filename.
-    rel_path is relative to CHIME_PATH_ROOT.
+    rel_path is relative to the repo root.
     """
     images = []
+    if repo == "chime-path":
+        repo_root = CHIME_PATH_ROOT
+    elif repo == "chime-host-analysis":
+        repo_root = CHIME_HOST_ROOT
+    else:
+        return images
+
     for fn in sorted(frb_dir.glob("*.png")):
-        rel = fn.relative_to(CHIME_PATH_ROOT)  # e.g. chime_path/2025/FRB.../file.png
+        rel = fn.relative_to(repo_root)
         filename = fn.name
-        kind = classify_kind(filename)
+        kind = classify_kind(filename, repo)
         images.append(
             {
-                "repo": "chime-path",
+                "repo": repo,
                 "rel_path": str(rel).replace("\\", "/"),
                 "filename": filename,
                 "kind": kind,
             }
         )
     return images
+
+def attach_host_images(entries):
+    """
+    If CHIME_HOST_ROOT is set, scan it for PNGs and attach them to
+    entries based on FRB IDs found in the path/filename.
+
+    This assumes your host-analysis images include the FRB ID in
+    the directory or filename (e.g., FRB20250405B_ppxf.png).
+    """
+    if CHIME_HOST_ROOT is None or not CHIME_HOST_ROOT.exists():
+        return entries
+
+    # Map FRB ID -> entry
+    by_id = {e["frb_id"]: e for e in entries}
+
+    # Recursively scan for PNGs under chime-host-analysis
+    for fn in CHIME_HOST_ROOT.rglob("*.png"):
+        name = fn.name
+        full_lower = str(fn).lower()
+
+        # crude FRB ID extraction: look for "frb" followed by 8 digits and a letter
+        # adjust if your naming scheme is different
+        frb_id = None
+        for key in by_id.keys():
+            if key.lower() in full_lower:
+                frb_id = key
+                break
+
+        if frb_id is None:
+            continue
+
+        entry = by_id[frb_id]
+        repo = "chime-host-analysis"
+        rel = fn.relative_to(CHIME_HOST_ROOT)
+        kind = classify_kind(name, repo)
+
+        img_info = {
+            "repo": repo,
+            "rel_path": str(rel).replace("\\", "/"),
+            "filename": name,
+            "kind": kind,
+        }
+        entry.setdefault("images", []).append(img_info)
+
+    return entries
 
 
 def parse_candidates(csv_path: Path):
@@ -153,7 +246,7 @@ def main():
                 continue
 
             frb_id = frb_dir.name  # e.g. FRB20250405B
-            images = find_images_for_frb(frb_dir)
+            images = find_images_for_frb(frb_dir, "chime-path")
 
             candidates_csv = next(frb_dir.glob("*_PATH_candidates.csv"), None)
             path_info = parse_candidates(candidates_csv) if candidates_csv else {}
@@ -167,6 +260,9 @@ def main():
             }
 
             entries.append(entry)
+
+    # After collecting all PATH entries, attach host-analysis images if available
+    entries = attach_host_images(entries)
 
     out_path = REPO_ROOT / "backend" / "frb_index.json"
     with out_path.open("w") as f:
