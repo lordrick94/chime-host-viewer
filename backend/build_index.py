@@ -26,8 +26,10 @@ CHIME_PATH_ROOT = Path(CHIME_PATH_ROOT).resolve()
 
 # Inside chime-path, your structure is chime_path/YYYY/FRB...
 CHIME_PATH_DATA = CHIME_PATH_ROOT / "chime_path"
+print(f"Using CHIME_PATH_DATA: {CHIME_PATH_DATA}")
 
-YEARS = ["2022", "2023", "2024", "2025"]
+#YEARS = ["2022", "2023", "2024", "2025"]
+YEARS = ["2018", "2019", "2020", "2021","2022", "2023", "2024", "2025"]
 
 
 def _to_float(v):
