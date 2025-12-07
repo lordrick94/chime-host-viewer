@@ -1,86 +1,227 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>FRB Viewer</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div id="sidebar">
-    <header>
-      <strong>FRB Viewer</strong>
-      <span id="status"></span>
-    </header>
-    <div id="controls">
-      <label>
-        Filter by FRB ID (substring):
-        <input type="text" id="filter-frb" placeholder="e.g., 20250405 or B">
-      </label>
-      <label>
-        Minimum top1 P_Ox:
-        <input type="number" id="filter-min-score" step="0.01" placeholder="e.g., 0.9">
-      </label>
-      <label>
-        Minimum (top1 + top2) P_Ox:
-        <input type="number" id="filter-min-sum" step="0.01" placeholder="e.g., 0.9">
-      </label>
-      <label>
-        Year:
-        <input type="text" id="filter-year" placeholder="2025 (optional)">
-      </label>
-    </div>
-    <div id="frb-table-container">
-      <table id="frb-table">
-        <thead>
-          <tr>
-            <th>FRB</th>
-            <th>Year</th>
-            <th>Date</th>
-            <th>Top1 P_Ox</th>
-            <th># Images</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- rows added by JS -->
-        </tbody>
-      </table>
-    </div>
-  </div>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CHIME FRB Host Viewer</title>
 
-  <div id="main">
-    <div id="selected-info">
-      Click an FRB in the table to see its images.
-    </div>
-    <div id="grid-controls">
-      <button type="button" id="btn-single-view">Selected FRB</button>
+    <!-- Main styles -->
+    <link rel="stylesheet" href="style.css" />
 
-      <div class="dropdown">
-        <button type="button" class="dropbtn">CHIME-PATH results ▾</button>
-        <div class="dropdown-content" id="dropdown-path">
-          <a href="#" data-mode="path-all">All PATH images</a>
-          <a href="#" data-mode="path-main">Main PATH images</a>
-          <a href="#" data-mode="path-local-stars">Local with stars</a>
-          <a href="#" data-mode="path-local-nostars">Local without stars</a>
-          <a href="#" data-mode="path-zoomin">Zoom-in</a>
-          <a href="#" data-mode="all-images">All images (all repos)</a>
+    <!-- NEW: Plotly for interactive plots -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Sidebar: filters, status, table -->
+      <aside id="sidebar">
+        <header id="sidebar-header">
+          <h1>FRB Viewer</h1>
+          <div id="status">Loading…</div>
+        </header>
+
+        <section id="controls">
+          <h2>Filters</h2>
+          <div class="control-group">
+            <label for="filter-frb-id">
+              FRB ID contains:
+              <input
+                type="text"
+                id="filter-frb-id"
+                placeholder="e.g. 2020, 2019, A, B"
+              />
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label for="filter-min-top1">
+              Min top1 P_Ox:
+              <input
+                type="number"
+                step="0.001"
+                id="filter-min-top1"
+                placeholder="e.g. 0.5"
+              />
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label for="filter-min-sum">
+              Min sum top2 P_Ox:
+              <input
+                type="number"
+                step="0.001"
+                id="filter-min-sum"
+                placeholder="e.g. 0.8"
+              />
+            </label>
+          </div>
+
+          <div class="control-group">
+            <button id="clear-selection">Clear selection</button>
+          </div>
+
+          <!-- NEW: grid view dropdowns (PATH / HOST) -->
+          <section id="grid-controls">
+            <h2>Grid Views</h2>
+
+            <div class="dropdown-group">
+              <span class="dropdown-label">CHIME-PATH</span>
+              <div id="dropdown-path" class="dropdown">
+                <a href="#" data-mode="path-main">Main PATH images</a>
+                <a href="#" data-mode="path-zoomin">Zoom-in PATH images</a>
+                <a href="#" data-mode="path-local-stars">Local (with stars)</a>
+                <a href="#" data-mode="path-local-nostars">Local (no stars)</a>
+              </div>
+            </div>
+
+            <div class="dropdown-group">
+              <span class="dropdown-label">CHIME-HOST</span>
+              <div id="dropdown-host" class="dropdown">
+                <a href="#" data-mode="host-all">All HOST images</a>
+                <a href="#" data-mode="host-ppxf">pPXF fits</a>
+                <a href="#" data-mode="host-sed">SEDs</a>
+                <a href="#" data-mode="host-spectra">Spectra</a>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section id="frb-table-section">
+          <h2>FRBs</h2>
+          <div class="table-wrapper">
+            <table id="frb-table">
+              <thead>
+                <tr>
+                  <th>FRB</th>
+                  <th>Year</th>
+                  <th>Top1 P_Ox</th>
+                  <th>Sum top2 P_Ox</th>
+                </tr>
+              </thead>
+              <tbody id="frb-table-body">
+                <!-- filled by viewer.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Main panel: details/images + NEW Data & Plots tab -->
+      <main id="main-panel">
+        <!-- NEW: tab buttons -->
+        <div id="main-tabs">
+          <button id="tab-details" class="tab-button active">
+            Details &amp; Images
+          </button>
+          <button id="tab-data" class="tab-button">
+            Data &amp; Plots
+          </button>
         </div>
-      </div>
 
-      <div class="dropdown">
-        <button type="button" class="dropbtn">CHIME-HOST analysis ▾</button>
-        <div class="dropdown-content" id="dropdown-host">
-          <a href="#" data-mode="host-all">All host images</a>
-          <a href="#" data-mode="host-ppxf">PPXF images</a>
-          <a href="#" data-mode="host-sed">SED images</a>
-          <a href="#" data-mode="host-spectra">Spectra images</a>
-        </div>
-      </div>
-    </div>
-    <div id="images-container">
-      <!-- image cards inserted here -->
-    </div>
-  </div>
+        <!-- DETAILS TAB PANEL (existing behavior) -->
+        <section id="panel-details" class="tab-panel">
+          <h2 id="selected-title">No FRB selected</h2>
+          <div id="selected-info">
+            Use the filters and table on the left to pick an FRB.
+          </div>
 
-  <script src="viewer.js"></script>
-</body>
+          <!-- Big images / grid used by existing viewer.js -->
+          <div id="images-container">
+            Select an FRB in the table on the left.
+          </div>
+        </section>
+
+        <!-- NEW: DATA & PLOTS TAB PANEL -->
+        <section
+          id="panel-data"
+          class="tab-panel"
+          style="display: none;"
+        >
+          <h2>PATH Candidate Data &amp; Plots</h2>
+
+          <!-- NEW: Plot controls -->
+          <div id="plot-controls">
+            <div class="controls-row">
+              <label>
+                X-axis:
+                <select id="plot-x-column"></select>
+              </label>
+              <label>
+                Y-axis:
+                <select id="plot-y-column"></select>
+              </label>
+            </div>
+
+            <div class="controls-row">
+              <label>
+                Min P_Ox:
+                <input
+                  type="number"
+                  step="0.001"
+                  id="cut-min-pox"
+                  placeholder="e.g. 0.1"
+                />
+              </label>
+              <label>
+                Max P_Ox:
+                <input
+                  type="number"
+                  step="0.001"
+                  id="cut-max-pox"
+                  placeholder="e.g. 0.99"
+                />
+              </label>
+              <label>
+                Max mag:
+                <input
+                  type="number"
+                  step="0.1"
+                  id="cut-max-mag"
+                  placeholder="e.g. 25"
+                />
+              </label>
+            </div>
+
+            <div class="controls-row">
+              <button id="btn-apply-cuts">Apply cuts</button>
+              <button id="btn-generate-plot">Generate plot</button>
+            </div>
+          </div>
+
+          <!-- NEW: Plot container -->
+          <div id="path-plot" style="height: 400px; margin-top: 1rem;">
+            <!-- Plotly will render here -->
+          </div>
+
+          <!-- NEW: Candidate table -->
+          <h3 style="margin-top: 1.5rem;">
+            PATH Candidate Table (after cuts)
+          </h3>
+          <div class="table-wrapper">
+            <table id="path-data-table">
+              <thead>
+                <tr>
+                  <th>FRB</th>
+                  <th>Cand ID</th>
+                  <th>mag</th>
+                  <th>P_Ox</th>
+                  <th>P_O</th>
+                  <th>P_XO</th>
+                  <th>Survey</th>
+                  <th>z_phot</th>
+                  <th>z_spec</th>
+                </tr>
+              </thead>
+              <tbody id="path-data-tbody">
+                <!-- filled by viewer.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Main viewer logic -->
+    <script src="viewer.js"></script>
+  </body>
 </html>
