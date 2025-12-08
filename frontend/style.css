@@ -63,6 +63,8 @@ body {
   flex-direction: column;
   padding: 0.75rem 0.75rem 1rem;
   gap: 0.75rem;
+  max-height: 100vh;   /* NEW: constrain to viewport */
+  overflow: hidden;    /* NEW: let inner content scroll instead */
 }
 
 #sidebar-header {
@@ -133,6 +135,11 @@ body {
   box-shadow: 0 0 0 1px rgba(255, 91, 31, 0.4);
 }
 
+/* Utility class for hiding tab panels without breaking flex layout */
+.hidden {
+  display: none !important;
+}
+
 #clear-selection {
   margin-top: 0.25rem;
 }
@@ -194,9 +201,10 @@ body {
 /* FRB table section */
 
 #frb-table-section {
-  flex: 1;
+  flex: 1 1 auto;              /* NEW: take remaining space */
   display: flex;
   flex-direction: column;
+  min-height: 0;                /* NEW: allow inner scroll */
   margin-top: 0.2rem;
   padding: 0.4rem 0.4rem 0.2rem;
   background: #0f0f16;
@@ -214,11 +222,16 @@ body {
 
 /* Table wrapper scroll area */
 .table-wrapper {
-  flex: 1;
   overflow: auto;
   border-radius: var(--radius-md);
   border: 1px solid #252535;
   background: radial-gradient(circle at top, #181821, #0c0c14);
+}
+
+/* FRB table wrapper takes remaining sidebar height */
+#frb-table-section .table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* ============================
@@ -289,6 +302,7 @@ tbody tr:hover {
   flex-direction: column;
   padding: 0.75rem 1rem;
   gap: 0.5rem;
+  min-height: 0;    /* NEW: allow inner panels to scroll */
 }
 
 #main-tabs {
@@ -328,6 +342,7 @@ tbody tr:hover {
   box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
+  min-height: 0;   /* NEW: children can scroll */
 }
 
 /* ============================
@@ -347,7 +362,9 @@ tbody tr:hover {
 }
 
 #images-container {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;             /* NEW: allow scrolling here */
+  overflow-y: auto;          /* NEW: scroll when many images */
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 0.6rem;
@@ -443,14 +460,24 @@ tbody tr:hover {
   box-shadow: 0 0 0 1px rgba(255, 91, 31, 0.4);
 }
 
-/* Candidate plot */
+/* Candidate plot: responsive height */
 #path-plot {
   border-radius: var(--radius-md);
   border: 1px solid #282838;
   background: radial-gradient(circle at top, #211118, #0a0a10);
+  height: 40vh !important;    /* NEW: override inline height, responsive */
+  min-height: 260px;
+  max-height: 60vh;
+  margin-top: 1rem;
 }
 
-/* Candidate table */
+/* Candidate table wrapper: scrollable */
+#panel-data .table-wrapper {
+  max-height: 35vh;           /* NEW: cap table height */
+  overflow-y: auto;           /* NEW: scroll when many rows */
+}
+
+/* Candidate table header tweak */
 #path-data-table thead {
   background: linear-gradient(180deg, #2a1212, #19141f);
 }
@@ -500,6 +527,7 @@ button:active {
   #sidebar {
     width: 100%;
     flex: 0 0 auto;
+    max-height: none;
   }
 
   #main-panel {

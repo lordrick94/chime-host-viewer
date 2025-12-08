@@ -646,18 +646,20 @@ function setupEventListeners() {
 
   if (tabDetails && tabData && panelDetails && panelData) {
     tabDetails.addEventListener("click", () => {
-      tabDetails.classList.add("active");
-      tabData.classList.remove("active");
-      panelDetails.style.display = "block";
-      panelData.style.display = "none";
-    });
+    tabDetails.classList.add("active");
+    tabData.classList.remove("active");
+
+    panelDetails.classList.remove("hidden");
+    panelData.classList.add("hidden");
+  });
 
     tabData.addEventListener("click", () => {
-      tabData.classList.add("active");
-      tabDetails.classList.remove("active");
-      panelDetails.style.display = "none";
-      panelData.style.display = "block";
-    });
+    tabData.classList.add("active");
+    tabDetails.classList.remove("active");
+
+    panelData.classList.remove("hidden");
+    panelDetails.classList.add("hidden");
+  });
   }
 
   // Data & Plots buttons
@@ -686,6 +688,8 @@ function setupEventListeners() {
 
 window.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded, initializing viewer...");
+  document.getElementById("panel-details").classList.remove("hidden");
+  document.getElementById("panel-data").classList.add("hidden");
   setupEventListeners();
   loadData();
   loadPathTable();

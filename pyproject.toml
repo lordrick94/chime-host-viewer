@@ -1,0 +1,28 @@
+[project]
+name = "frb-viewer"
+version = "0.1.0"
+description = "Interactive CHIME FRB Host + PATH viewer"
+authors = [
+  { name = "Lordrick Kahinga" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "python-dotenv",
+  "jinja2",
+  "plotly",
+]
+
+[project.scripts]
+frb-viewer = "frb_viewer.__main__:main"
+
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# 🔥 Tell setuptools EXACTLY which package to include
+[tool.setuptools.packages.find]
+include = ["frb_viewer"]
