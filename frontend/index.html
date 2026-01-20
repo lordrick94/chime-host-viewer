@@ -16,6 +16,13 @@
       <aside id="sidebar">
         <header id="sidebar-header">
           <h1>FRB Viewer</h1>
+          <div id="data-source-selector">
+            <label for="data-source-select">Data Source:</label>
+            <select id="data-source-select" disabled>
+              <option value="">Loading...</option>
+            </select>
+            <span id="switch-status"></span>
+          </div>
           <div id="status">Loading…</div>
         </header>
 
@@ -182,9 +189,22 @@
             </div>
 
             <div class="controls-row">
+              <label>
+                Candidates to load:
+                <select id="candidates-mode-select">
+                  <option value="top1" selected>Top 1 per FRB</option>
+                  <option value="top2">Top 2 per FRB</option>
+                  <option value="top5">Top 5 per FRB</option>
+                  <option value="all">All candidates</option>
+                </select>
+              </label>
+            </div>
+            <div class="controls-row">
               <button id="btn-apply-cuts">Apply cuts</button>
               <button id="btn-generate-plot">Generate plot</button>
+              <button id="btn-load-all" class="btn-load-all" title="Load candidates for plotting">Load data for plot</button>
             </div>
+            <div id="data-load-status" class="data-load-status"></div>
           </div>
 
           <!-- NEW: Plot container -->
@@ -196,6 +216,26 @@
           <h3 style="margin-top: 1.5rem;">
             PATH Candidate Table (after cuts)
           </h3>
+          <!-- Pagination controls -->
+          <div id="pagination-controls" class="pagination">
+            <div id="pagination-info">Showing 0 of 0 candidates</div>
+            <div class="pagination-buttons">
+              <button id="btn-prev-page" disabled>← Previous</button>
+              <span id="page-indicator">Page 1</span>
+              <button id="btn-next-page" disabled>Next →</button>
+            </div>
+            <div class="pagination-size">
+              <label>
+                Per page:
+                <select id="page-size-select">
+                  <option value="50">50</option>
+                  <option value="100" selected>100</option>
+                  <option value="500">500</option>
+                  <option value="1000">1000</option>
+                </select>
+              </label>
+            </div>
+          </div>
           <div class="table-wrapper">
             <table id="path-data-table">
               <thead>
@@ -218,6 +258,33 @@
           </div>
         </section>
       </main>
+    </div>
+
+    <!-- Lightbox modal -->
+    <div id="lightbox" class="lightbox hidden">
+      <div class="lightbox-overlay"></div>
+      <div class="lightbox-content">
+        <button id="lightbox-close" class="lightbox-close" title="Close (Esc)">&times;</button>
+        <button id="lightbox-prev" class="lightbox-nav lightbox-prev" title="Previous (←)">&#10094;</button>
+        <div class="lightbox-image-container">
+          <img id="lightbox-img" src="" alt="Full size image" />
+          <div id="lightbox-caption" class="lightbox-caption"></div>
+        </div>
+        <button id="lightbox-next" class="lightbox-nav lightbox-next" title="Next (→)">&#10095;</button>
+      </div>
+      <div class="lightbox-toolbar">
+        <button id="lightbox-download" class="lightbox-download" title="Download image">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download
+        </button>
+        <span class="lightbox-counter">
+          <span id="lightbox-current">1</span> / <span id="lightbox-total">1</span>
+        </span>
+      </div>
     </div>
 
     <!-- Main viewer logic -->
